@@ -9,5 +9,9 @@ contract ERC20 is IERC20 {
     mapping(address owner => mapping(address spender => uint256 allowance)) private _allowances;
     uint256 private _totalSupply;
 
-    function _update(address from, address to, uint256 value) internal virtual {}
+    function _update(address from, address to, uint256 value) internal virtual {
+        if (from == address(0)) {
+            _totalSupply += value;
+        }
+    }
 }
