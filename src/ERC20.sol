@@ -23,5 +23,11 @@ contract ERC20 is IERC20 {
                 _balances[from] = fromBalance - value;
             }
         }
+
+        if (to == address(0)) {
+            unchecked {
+                _totalSupply -= value;
+            }
+        }
     }
 }
