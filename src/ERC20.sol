@@ -12,6 +12,16 @@ contract ERC20 is IERC20 {
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
+        } else {
+            uint256 fromBalance = _balances[from];
+
+            if (fromBalance < value) {
+                revert ERC20InsufficientBalance(from, fromBalance, value);
+            }
+
+            unchecked {
+                _balances[from] = fromBalance - value;
+            }
         }
     }
 }
