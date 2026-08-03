@@ -28,6 +28,10 @@ contract ERC20 is IERC20 {
             unchecked {
                 _totalSupply -= value;
             }
+        } else {
+            unchecked {
+                _balances[to] += value;
+            }
         }
     }
 }
