@@ -14,6 +14,11 @@ contract ERC20 is IERC20 {
         return true;
     }
 
+    function balanceOf(address account) public view virtual returns (uint256) {
+        // @TODO: Implement the balanceOf logic
+
+        }
+
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
