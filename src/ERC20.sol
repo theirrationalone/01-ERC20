@@ -24,6 +24,10 @@ contract ERC20 is IERC20 {
         return _totalSupply;
     }
 
+    function allowance(address owner, address spender) public view virtual returns (uint256) {
+        return _allowances[owner][spender];
+    }
+
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
