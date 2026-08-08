@@ -28,6 +28,11 @@ contract ERC20 is IERC20 {
         return _allowances[owner][spender];
     }
 
+    function approve(address spender, uint256 value) public virtual returns (bool) {
+        _approve(msg.sender, spender, value);
+        return true;
+    }
+
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
