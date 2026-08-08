@@ -33,6 +33,11 @@ contract ERC20 is IERC20 {
         return true;
     }
 
+    function _approve(address owner, address spender, uint256 value) internal virtual {
+        _allowances[owner][spender] = value;
+        emit Approval(owner, spender, value);
+    }
+
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
