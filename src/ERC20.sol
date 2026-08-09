@@ -6,6 +6,7 @@ import {IERC20} from "./IERC20.sol";
 
 contract ERC20 is IERC20 {
     error ERC20InsufficientBalance(address from, uint256 fromBalance, uint256 value);
+    error ERC20InsufficientAllowance(address spender, uint256 currentAllowance, uint256 value);
 
     mapping(address account => uint256 balance) private _balances;
     mapping(address owner => mapping(address spender => uint256 allowance)) private _allowances;
@@ -36,6 +37,20 @@ contract ERC20 is IERC20 {
     function _approve(address owner, address spender, uint256 value) internal virtual {
         _allowances[owner][spender] = value;
         emit Approval(owner, spender, value);
+    }
+
+    function _spendAllowance(address owner, address spender, uint256 value) internal virtual {
+        uint256 currentAllowance = allowance(owner, spender);
+
+        if (currentAllowance < type(uint256).max) {
+            if (currentAllowance < value) {
+                revert ERC20InsufficientAllowance(spender, currentAllowance, value);
+            }
+
+            unchecked {
+                _approve(owner, spender, currentAllowance - value, false);
+            }
+        }
     }
 
     function _update(address from, address to, uint256 value) internal virtual {
