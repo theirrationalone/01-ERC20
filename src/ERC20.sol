@@ -53,6 +53,15 @@ contract ERC20 is IERC20 {
         }
     }
 
+    function transferFrom(address from, address to, uint256 value) public virtual returns (bool) {
+        address spender = _msgSender();
+
+        _spendAllowance(from, spender, value);
+        _update(from, to, value);
+
+        return true;
+    }
+
     function _update(address from, address to, uint256 value) internal virtual {
         if (from == address(0)) {
             _totalSupply += value;
