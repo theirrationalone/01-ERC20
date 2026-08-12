@@ -8,6 +8,7 @@ contract ERC20 is IERC20 {
     error ERC20InsufficientBalance(address from, uint256 fromBalance, uint256 value);
     error ERC20InsufficientAllowance(address spender, uint256 currentAllowance, uint256 value);
     error ERC20InvalidReceiver(address account);
+    error ERC20InvalidSender(address account);
 
     mapping(address account => uint256 balance) private _balances;
     mapping(address owner => mapping(address spender => uint256 allowance)) private _allowances;
@@ -67,6 +68,12 @@ contract ERC20 is IERC20 {
         if (account == address(0)) revert ERC20InvalidReceiver(address(0));
 
         _update(address(0), account, value);
+    }
+
+    function _burn(address account, uint256 value) internal virtual {
+        if (account == address(0)) revert ERC20InvalidSender(address(0));
+
+        _update(account, address(0), value);
     }
 
     function _update(address from, address to, uint256 value) internal virtual {
