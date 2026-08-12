@@ -4,11 +4,17 @@ pragma solidity ^0.8.30;
 
 import {IERC20} from "./IERC20.sol";
 
-contract ERC20 is IERC20 {
-    error ERC20InsufficientBalance(address from, uint256 fromBalance, uint256 value);
-    error ERC20InsufficientAllowance(address spender, uint256 currentAllowance, uint256 value);
-    error ERC20InvalidReceiver(address account);
-    error ERC20InvalidSender(address account);
+abstract contract Context {
+    function _msgSender() internal view virtual returns (address) {
+        return msg.sender;
+    }
+}
+
+contract ERC20 is Context, IERC20 {
+    error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed);
+    error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed);
+    error ERC20InvalidReceiver(address receiver);
+    error ERC20InvalidSender(address sender);
 
     mapping(address account => uint256 balance) private _balances;
     mapping(address owner => mapping(address spender => uint256 allowance)) private _allowances;
@@ -50,7 +56,7 @@ contract ERC20 is IERC20 {
             }
 
             unchecked {
-                _approve(owner, spender, currentAllowance - value, false);
+                _approve(owner, spender, currentAllowance - value);
             }
         }
     }
