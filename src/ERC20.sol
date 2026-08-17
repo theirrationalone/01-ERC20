@@ -106,5 +106,7 @@ contract ERC20 is Context, IERC20 {
                 _balances[to] += value;
             }
         }
+
+        emit Transfer(from, to, value);
     }
 }
