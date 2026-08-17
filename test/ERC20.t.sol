@@ -107,6 +107,105 @@ contract ERC20Test is Test {
         assertEq(totalSupply, amount + (amount - 50));
         assertEq(totalSupply, aliceBalance + bobBalance);
     }
+
+    function test_mintZero() public {
+        vm.startPrank(owner);
+        token.exposedMint(alice, 0);
+        vm.stopPrank();
+
+        uint256 aliceBalance = token.balanceOf(alice);
+        uint256 totalSupply = token.totalSupply();
+
+        console2.log("Token alice balance: ", aliceBalance);
+        console2.log("Token total supply : ", totalSupply);
+
+        assertEq(aliceBalance, 0);
+        assertEq(totalSupply, 0);
+    }
+
+    function test_revertWhen_mintToZeroAddress() public {
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+
+        vm.startPrank(owner);
+        vm.expectRevert(abi.encodeWithSelector(ERC20.ERC20InvalidReceiver.selector, address(0)));
+        token.exposedMint(address(0), 100);
+        vm.stopPrank();
+
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+
+        console2.log("Token total supply before   : ", totalSupplyBefore);
+        console2.log("Token alice balance before  : ", aliceBalanceBefore);
+        console2.log("Token bob balance before    : ", bobBalanceBefore);
+        console2.log("Token charlie balance before: ", charlieBalanceBefore);
+
+        console2.log("--------------");
+
+        console2.log("Token total supply after   : ", totalSupplyAfter);
+        console2.log("Token alice balance after  : ", aliceBalanceAfter);
+        console2.log("Token bob balance after    : ", bobBalanceAfter);
+        console2.log("Token charlie balance after: ", charlieBalanceAfter);
+
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+    }
+
+    function test_mintMaxUint() public {
+        uint256 maxAmount = type(uint256).max;
+
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+
+        vm.startPrank(owner);
+        token.exposedMint(alice, maxAmount);
+        vm.stopPrank();
+
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+
+        console2.log("Token total supply before : ", totalSupplyBefore);
+        console2.log("Token alice balance before: ", aliceBalanceBefore);
+        console2.log("Token total supply after  : ", totalSupplyAfter);
+        console2.log("Token alice balance after : ", aliceBalanceAfter);
+
+        assertEq(totalSupplyBefore, 0);
+        assertEq(aliceBalanceBefore, 0);
+        assertEq(totalSupplyAfter, maxAmount);
+        assertEq(aliceBalanceAfter, maxAmount);
+    }
+
+    function test_mintMoreThanMaxUint() public {
+        uint256 maxAmount = type(uint256).max;
+
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+
+        vm.startPrank(owner);
+        token.exposedMint(alice, maxAmount);
+        vm.expectRevert();
+        token.exposedMint(alice, 1);
+        vm.stopPrank();
+
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+
+        console2.log("Token total supply before : ", totalSupplyBefore);
+        console2.log("Token alice balance before: ", aliceBalanceBefore);
+        console2.log("Token total supply after  : ", totalSupplyAfter);
+        console2.log("Token alice balance after : ", aliceBalanceAfter);
+
+        assertEq(totalSupplyBefore, 0);
+        assertEq(aliceBalanceBefore, 0);
+        assertEq(totalSupplyAfter, maxAmount);
+        assertEq(aliceBalanceAfter, maxAmount);
+    }
 }
 
 contract ERC20Harness is ERC20 {
