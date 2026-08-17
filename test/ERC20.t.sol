@@ -206,6 +206,144 @@ contract ERC20Test is Test {
         assertEq(totalSupplyAfter, maxAmount);
         assertEq(aliceBalanceAfter, maxAmount);
     }
+
+    modifier _mintUsers() {
+        uint256 amount = 1000;
+        vm.startPrank(owner);
+        token.exposedMint(alice, amount);
+        token.exposedMint(bob, amount);
+        token.exposedMint(charlie, amount);
+        vm.stopPrank();
+        _;
+    }
+
+    function test_transferSimple() public _mintUsers {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 usersTotalBalanceBefore = aliceBalanceBefore + bobBalanceBefore + token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        assertEq(totalSupplyBefore, usersTotalBalanceBefore);
+
+        uint256 transferAmount = 100;
+
+        vm.startPrank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Transfer(alice, bob, transferAmount);
+        bool success = token.transfer(bob, transferAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - transferAmount);
+        assertEq(bobBalanceAfter, bobBalanceBefore + transferAmount);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_revertsWhen_transfer_exceedsBalance() public _mintUsers {
+        uint256 transferAmount = 1001;
+
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 usersTotalBalanceBefore = aliceBalanceBefore + bobBalanceBefore + token.balanceOf(charlie);
+
+        vm.startPrank(alice);
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20.ERC20InsufficientBalance.selector, alice, aliceBalanceBefore, transferAmount)
+        );
+        bool success = token.transfer(bob, transferAmount);
+        assert(!success);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_transfer_zeroAmount() public _mintUsers {
+        uint256 transferAmount = 0;
+
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 usersTotalBalanceBefore = aliceBalanceBefore + bobBalanceBefore + token.balanceOf(charlie);
+
+        vm.startPrank(alice);
+        bool success = token.transfer(bob, transferAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_selfTransfer() public _mintUsers {
+        uint256 transferAmount = 100;
+
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 usersTotalBalanceBefore = aliceBalanceBefore + bobBalanceBefore + token.balanceOf(charlie);
+
+        vm.startPrank(alice);
+        bool success = token.transfer(alice, transferAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_transferTo_zeroAddress() public _mintUsers {
+        uint256 transferAmount = 100;
+
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+        uint256 usersTotalBalanceBefore = aliceBalanceBefore + bobBalanceBefore + token.balanceOf(charlie);
+
+        vm.startPrank(alice);
+        // vm.expectRevert(abi.encodeWithSelector(ERC20.ERC20InvalidReceiver.selector), address(0));
+        bool success = token.transfer(address(0), transferAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+        uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
 }
 
 contract ERC20Harness is ERC20 {

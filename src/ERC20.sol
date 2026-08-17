@@ -21,7 +21,7 @@ contract ERC20 is Context, IERC20 {
     uint256 private _totalSupply;
 
     function transfer(address to, uint256 value) public virtual override returns (bool) {
-        _update(msg.sender, to, value);
+        _update(_msgSender(), to, value);
         return true;
     }
 
@@ -38,7 +38,7 @@ contract ERC20 is Context, IERC20 {
     }
 
     function approve(address spender, uint256 value) public virtual returns (bool) {
-        _approve(msg.sender, spender, value);
+        _approve(_msgSender(), spender, value);
         return true;
     }
 
