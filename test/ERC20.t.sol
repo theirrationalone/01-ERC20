@@ -480,6 +480,25 @@ contract ERC20Test is Test {
         assertEq(charlieBalanceAfterTransfer, charlieBalanceAfter + aliceApproveAmount);
         assertEq(totalSupplyAfterTransfer, totalSupplyAfter);
     }
+
+    function test_transferFrom_revertsOnTransfer_moreThanAllowed() public _mintUsers {
+        uint256 aliceApproveAmount = 100;
+
+        vm.startPrank(alice);
+        bool success = token.approve(bob, aliceApproveAmount);
+        assert(success);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                ERC20.ERC20InsufficientAllowance.selector, bob, aliceApproveAmount, aliceApproveAmount + 1
+            )
+        );
+        bool transferSuccess = token.transferFrom(alice, charlie, aliceApproveAmount + 1);
+        assert(!transferSuccess);
+        vm.stopPrank();
+    }
 }
 
 contract ERC20Harness is ERC20 {
