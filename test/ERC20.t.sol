@@ -431,6 +431,55 @@ contract ERC20Test is Test {
         assertEq(aliceAllowanceToBobBefore, 0);
         assertEq(aliceAllowanceToBobAfter, aliceResetAllowance);
     }
+
+    function test_transferFrom() public _mintUsers {
+        uint256 aliceAllowanceToBobBefore = token.allowance(alice, bob);
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 100;
+
+        vm.startPrank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Approval(alice, bob, aliceApproveAmount);
+        bool success = token.approve(bob, aliceApproveAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceAllowanceToBobAfter = token.allowance(alice, bob);
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(aliceAllowanceToBobBefore, 0);
+        assertEq(aliceAllowanceToBobAfter, aliceApproveAmount);
+
+        vm.startPrank(bob);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Transfer(alice, charlie, aliceApproveAmount);
+        bool transferSuccess = token.transferFrom(alice, charlie, aliceApproveAmount);
+        assert(transferSuccess);
+        vm.stopPrank();
+
+        uint256 aliceAllowanceToBobAfterTransfer = token.allowance(alice, bob);
+        uint256 aliceBalanceAfterTransfer = token.balanceOf(alice);
+        uint256 bobBalanceAfterTransfer = token.balanceOf(bob);
+        uint256 charlieBalanceAfterTransfer = token.balanceOf(charlie);
+        uint256 totalSupplyAfterTransfer = token.totalSupply();
+
+        assertEq(aliceAllowanceToBobAfterTransfer, 0);
+        assertEq(aliceBalanceAfterTransfer, aliceBalanceAfter - aliceApproveAmount);
+        assertEq(bobBalanceAfterTransfer, bobBalanceAfter);
+        assertEq(charlieBalanceAfterTransfer, charlieBalanceAfter + aliceApproveAmount);
+        assertEq(totalSupplyAfterTransfer, totalSupplyAfter);
+    }
 }
 
 contract ERC20Harness is ERC20 {
