@@ -344,6 +344,93 @@ contract ERC20Test is Test {
         assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
         assertEq(totalSupplyAfter, totalSupplyBefore);
     }
+
+    function test_approve() public _mintUsers {
+        uint256 aliceAllowanceToBobBefore = token.allowance(alice, bob);
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 100;
+
+        vm.startPrank(alice);
+        vm.expectEmit(true, true, false, true);
+        emit IERC20.Approval(alice, bob, aliceApproveAmount);
+        bool success = token.approve(bob, aliceApproveAmount);
+        assert(success);
+        vm.stopPrank();
+
+        uint256 aliceAllowanceToBobAfter = token.allowance(alice, bob);
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(aliceAllowanceToBobBefore, 0);
+        assertEq(aliceAllowanceToBobAfter, aliceApproveAmount);
+    }
+
+    function test_approveReplacesExistingAllowance() public _mintUsers {
+        uint256 aliceAllowanceToBobBefore = token.allowance(alice, bob);
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 100;
+        uint256 aliceNewApproveAmount = 50;
+
+        vm.startPrank(alice);
+        bool success = token.approve(bob, aliceApproveAmount);
+        assert(success);
+        assertEq(token.allowance(alice, bob), aliceApproveAmount);
+
+        bool success2 = token.approve(bob, aliceNewApproveAmount);
+        assert(success2);
+        vm.stopPrank();
+
+        uint256 aliceAllowanceToBobAfter = token.allowance(alice, bob);
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(aliceAllowanceToBobBefore, 0);
+        assertEq(aliceAllowanceToBobAfter, aliceNewApproveAmount);
+    }
+
+    function test_approveResetAllowance() public _mintUsers {
+        uint256 aliceAllowanceToBobBefore = token.allowance(alice, bob);
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 100;
+        uint256 aliceResetAllowance = 0;
+
+        vm.startPrank(alice);
+        bool success = token.approve(bob, aliceApproveAmount);
+        assert(success);
+        assertEq(token.allowance(alice, bob), aliceApproveAmount);
+
+        bool success2 = token.approve(bob, aliceResetAllowance);
+        assert(success2);
+        vm.stopPrank();
+
+        uint256 aliceAllowanceToBobAfter = token.allowance(alice, bob);
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(aliceAllowanceToBobBefore, 0);
+        assertEq(aliceAllowanceToBobAfter, aliceResetAllowance);
+    }
 }
 
 contract ERC20Harness is ERC20 {
