@@ -573,6 +573,35 @@ contract ERC20Test is Test {
         assertEq(charlieBalanceAfter, charlieBalanceBefore);
         assertEq(totalSupplyAfter, totalSupplyBefore);
     }
+
+    function test_transferFrom_zeroAllowance_with_moreThanZeroTransfer() public _mintUsers {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 0;
+
+        vm.startPrank(alice);
+        token.approve(bob, aliceApproveAmount);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        vm.expectRevert(abi.encodeWithSelector(ERC20.ERC20InsufficientAllowance.selector, bob, aliceApproveAmount, 100));
+        bool transferSuccess = token.transferFrom(alice, charlie, 100);
+        assert(!transferSuccess);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
 }
 
 contract ERC20Harness is ERC20 {
