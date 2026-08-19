@@ -339,10 +339,10 @@ contract ERC20Test is Test {
         uint256 totalSupplyAfter = token.totalSupply();
         uint256 usersTotalBalanceAfter = aliceBalanceAfter + bobBalanceAfter + token.balanceOf(charlie);
 
-        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(aliceBalanceAfter, aliceBalanceBefore - transferAmount);
         assertEq(bobBalanceAfter, bobBalanceBefore);
-        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore);
-        assertEq(totalSupplyAfter, totalSupplyBefore);
+        assertEq(usersTotalBalanceAfter, usersTotalBalanceBefore - transferAmount);
+        assertEq(totalSupplyAfter, totalSupplyBefore - transferAmount);
     }
 
     function test_approve() public _mintUsers {
@@ -482,6 +482,11 @@ contract ERC20Test is Test {
     }
 
     function test_transferFrom_revertsOnTransfer_moreThanAllowed() public _mintUsers {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
         uint256 aliceApproveAmount = 100;
 
         vm.startPrank(alice);
@@ -498,6 +503,75 @@ contract ERC20Test is Test {
         bool transferSuccess = token.transferFrom(alice, charlie, aliceApproveAmount + 1);
         assert(!transferSuccess);
         vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_transferFrom_exceedsBalance() public _mintUsers {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 1200;
+
+        vm.startPrank(alice);
+        token.approve(bob, aliceApproveAmount);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        vm.expectRevert(
+            abi.encodeWithSelector(ERC20.ERC20InsufficientBalance.selector, alice, token.balanceOf(alice), 1200)
+        );
+        bool transferSuccess = token.transferFrom(alice, charlie, aliceApproveAmount);
+        assert(!transferSuccess);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
+    }
+
+    function test_transferFrom_zeroAllowance() public _mintUsers {
+        uint256 aliceBalanceBefore = token.balanceOf(alice);
+        uint256 bobBalanceBefore = token.balanceOf(bob);
+        uint256 charlieBalanceBefore = token.balanceOf(charlie);
+        uint256 totalSupplyBefore = token.totalSupply();
+
+        uint256 aliceApproveAmount = 0;
+
+        vm.startPrank(alice);
+        token.approve(bob, aliceApproveAmount);
+        vm.stopPrank();
+
+        vm.startPrank(bob);
+        bool transferSuccess = token.transferFrom(alice, charlie, aliceApproveAmount);
+        assert(transferSuccess);
+        vm.stopPrank();
+
+        uint256 aliceBalanceAfter = token.balanceOf(alice);
+        uint256 bobBalanceAfter = token.balanceOf(bob);
+        uint256 charlieBalanceAfter = token.balanceOf(charlie);
+        uint256 totalSupplyAfter = token.totalSupply();
+
+        assertEq(aliceBalanceAfter, aliceBalanceBefore);
+        assertEq(bobBalanceAfter, bobBalanceBefore);
+        assertEq(charlieBalanceAfter, charlieBalanceBefore);
+        assertEq(totalSupplyAfter, totalSupplyBefore);
     }
 }
 
